@@ -49,7 +49,7 @@ def load_sentiment_pipeline():
 
 classifier = load_sentiment_pipeline()
 
-# Helper Inference Function (Threshold set to 0.80)
+# Helper Inference Function
 def predict_text(text):
     results = classifier(text)
     if isinstance(results, list) and len(results) > 0:
@@ -59,21 +59,13 @@ def predict_text(text):
         pos = scores.get('POSITIVE', scores.get('LABEL_1', 0.0))
         neg = scores.get('NEGATIVE', scores.get('LABEL_0', 0.0))
         
-        # Threshold Logic for Mixed / Balanced Sentiments
-        threshold = 0.80 
-        if abs(pos - neg) < threshold:
-            label = "MIXED"
-            pos = 0.50
-            neg = 0.50
-        else:
-            label = "POSITIVE" if pos > neg else "NEGATIVE"
-            
+        label = "POSITIVE" if pos > neg else "NEGATIVE"
         return label, pos, neg
     
     return "UNKNOWN", 0.0, 0.0
 
 # ==========================================
-# 3. Aspect-Based Sentiment Analysis Engine
+# 3. Aspect-Based Sentiment Analysis Engine (Definitive Deterministic ABSA)
 # ==========================================
 ASPECT_KEYWORDS = {
     "acting": ["acting", "actor", "actress", "cast", "performance", "performances"],
@@ -83,24 +75,41 @@ ASPECT_KEYWORDS = {
     "music": ["music", "soundtrack", "score", "songs", "sound"]
 }
 
+CONTRAST_WORDS = ["but", "however", "although", "yet", "on the other hand", "despite"]
+
 def analyze_aspects(text):
-    # Splits strictly at sentence delimiters (not at 'but' or 'and')
+    # تقسيم النص بناءً على النقاط وعلامات الترقيم الرئيسية
     sentences = re.split(r'[\.\!\?\n]', text)
     aspect_results = {}
 
     for aspect, keywords in ASPECT_KEYWORDS.items():
-        relevant_sentences = []
+        relevant_parts = []
         for sent in sentences:
             if any(re.search(r'\b' + kw + r'\b', sent, re.IGNORECASE) for kw in keywords):
-                relevant_sentences.append(sent.strip())
+                relevant_parts.append(sent.strip())
 
-        if relevant_sentences:
-            combined_sent = " ".join(relevant_sentences)
-            label, pos_s, neg_s = predict_text(combined_sent)
+        if relevant_parts:
+            combined_aspect_text = " ".join(relevant_parts)
+            
+            # فحص حتمي: هل يحتوي نص العنصر على كلمة تناقض؟
+            has_contrast = any(re.search(r'\b' + cw + r'\b', combined_aspect_text, re.IGNORECASE) for cw in CONTRAST_WORDS)
+            
+            if has_contrast:
+                # إذا وجد تناقض مباشر في نفس سياق العنصر، يتم التعيين قسراً لـ 50/50 MIXED
+                final_label = "MIXED"
+                final_pos = 50.0
+                final_neg = 50.0
+            else:
+                # غير ذلك يتم الاعتماد على التقييم الطبيعي من النموذج
+                lbl, pos_s, neg_s = predict_text(combined_aspect_text)
+                final_label = lbl
+                final_pos = round(pos_s * 100, 1)
+                final_neg = round(neg_s * 100, 1)
+
             aspect_results[aspect] = {
-                "sentiment": label,
-                "positive_pct": round(pos_s * 100, 1),
-                "negative_pct": round(neg_s * 100, 1),
+                "sentiment": final_label,
+                "positive_pct": final_pos,
+                "negative_pct": final_neg,
                 "mentioned": True
             }
         else:
