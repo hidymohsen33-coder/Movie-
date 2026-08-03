@@ -1,6 +1,7 @@
 import time
 import re
 import os
+import base64
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -24,6 +25,20 @@ st.markdown("""
         background: linear-gradient(135deg, #0A0819 0%, #03010A 100%);
         color: #E2E8F0;
     }
+    
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .logo-img {
+        max-width: 180px;
+        height: auto;
+        border-radius: 20px;
+        box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+    }
+    
     .header-title {
         text-align: center;
         font-size: 42px;
@@ -41,6 +56,7 @@ st.markdown("""
         letter-spacing: 1.5px;
         font-weight: 600;
     }
+    
     .metric-card {
         background: rgba(15, 23, 42, 0.75);
         border-radius: 16px;
@@ -160,37 +176,33 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Logo Handling & Layout
+# 4. Embedded Logo (Direct Render)
 # ==========================================
 
-# فحص إن كانت صورة اللوجو موجودة في المستودع
-logo_path = None
-for file in ["logo.png", "logo.jpg", "logo.jpeg"]:
-    if os.path.exists(file):
-        logo_path = file
-        break
+# إظهار صورة اللوجو في أعلى المنتصف
+st.markdown("""
+    <div class="logo-container">
+        <img class="logo-img" src="https://raw.githubusercontent.com/streamlit/streamlit/main/docs/static/logo.png" alt="CineSense Logo" style="display:none;">
+    </div>
+""", unsafe_allow_html=True)
 
-# إظهار زر رفع صورة أختياري في القائمة الجانبية
-uploaded_logo = st.sidebar.file_uploader("Upload Custom Logo:", type=["png", "jpg", "jpeg"])
-
-if uploaded_logo is not None:
-    logo_to_display = uploaded_logo
-elif logo_path is not None:
-    logo_to_display = logo_path
-else:
-    logo_to_display = None
-
-# عرض اللوجو في أعلى المنتصف
-if logo_to_display:
-    col_l, col_c, col_r = st.columns([1, 1.2, 1])
-    with col_c:
-        st.image(logo_to_display, use_container_width=True)
-    st.sidebar.image(logo_to_display, use_container_width=True)
+# البحث عن ملف اللوجو أو إظهاره بمرونة
+col_l, col_c, col_r = st.columns([1, 1, 1])
+with col_c:
+    # محاولة قراءة أي ملف صورة موجود في المجلد الرئيسي للـ GitHub
+    img_files = [f for f in os.listdir('.') if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+    if img_files:
+        st.image(img_files[0], width=200)
+    else:
+        st.write("")
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
 
-# Sidebar Specs
+# Sidebar Specs & Logo
+if 'img_files' in locals() and img_files:
+    st.sidebar.image(img_files[0], use_container_width=True)
+
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Architecture:** Fine-Tuned BERT + ABSA")
