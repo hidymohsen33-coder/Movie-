@@ -49,16 +49,27 @@ def load_sentiment_pipeline():
 
 classifier = load_sentiment_pipeline()
 
-# Helper Inference Function
+# Helper Inference Function (Updated with 50/50 Thresholding)
 def predict_text(text):
     results = classifier(text)
     if isinstance(results, list) and len(results) > 0:
         raw = results[0] if isinstance(results[0], list) else results
         scores = {res['label']: res['score'] for res in raw}
+        
         pos = scores.get('POSITIVE', scores.get('LABEL_1', 0.0))
         neg = scores.get('NEGATIVE', scores.get('LABEL_0', 0.0))
-        label = "POSITIVE" if pos > neg else "NEGATIVE"
+        
+        # Threshold Logic for Mixed / Balanced Sentiments
+        threshold = 0.25 
+        if abs(pos - neg) < threshold:
+            label = "MIXED"
+            pos = 0.50
+            neg = 0.50
+        else:
+            label = "POSITIVE" if pos > neg else "NEGATIVE"
+            
         return label, pos, neg
+    
     return "UNKNOWN", 0.0, 0.0
 
 # ==========================================
@@ -117,7 +128,7 @@ st.sidebar.markdown("**Status:** 🟢 Live 24/7 API")
 tab_single, tab_batch = st.tabs(["📄 Single Review & Aspect Breakdown", "📊 Batch Analytics"])
 
 # ------------------------------------------
-# TAB 1: Single Review & Aspect Breakdown (New ABSA)
+# TAB 1: Single Review & Aspect Breakdown
 # ------------------------------------------
 with tab_single:
     st.subheader("Single Text & Aspect Breakdown")
@@ -127,7 +138,7 @@ with tab_single:
         [
             "Custom Input",
             "Sample 1: The acting was superb but the story was dull and the ending was disappointing.",
-            "Sample 2: The visuals were stunning and the music was great, but the plot made no sense.",
+            "Sample 2: The acting was brilliant in some scenes, but the acting was terrible in others.",
             "Sample 3: An absolute masterpiece with flawless direction and brilliant acting from start to finish."
         ]
     )
@@ -135,7 +146,7 @@ with tab_single:
     if "Sample 1" in preset:
         default_val = "The acting was superb but the story was dull and the ending was disappointing."
     elif "Sample 2" in preset:
-        default_val = "The visuals were stunning and the music was great, but the plot made no sense."
+        default_val = "The acting was brilliant in some scenes, but the acting was terrible in others."
     elif "Sample 3" in preset:
         default_val = "An absolute masterpiece with flawless direction and brilliant acting from start to finish."
     else:
@@ -232,7 +243,7 @@ with tab_single:
                 st.info("No specific movie aspects (acting, plot, directing, visuals, music) detected in this review.")
 
 # ------------------------------------------
-# TAB 2: Batch Analytics (Original Favorite View)
+# TAB 2: Batch Analytics
 # ------------------------------------------
 with tab_batch:
     st.subheader("Batch Review Analytics")
