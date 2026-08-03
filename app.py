@@ -30,13 +30,13 @@ st.markdown("""
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
     .logo-img {
         max-width: 180px;
         height: auto;
-        border-radius: 20px;
-        box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+        border-radius: 16px;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
     }
     
     .header-title {
@@ -176,32 +176,30 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Embedded Logo (Direct Render)
+# 4. EMBEDDED LOGO (Guaranteed Display)
 # ==========================================
+# محاولة استدعاء اللوجو محلياً إن وُجد، أو استخدام الرابط المباشر
+logo_html = ""
+if os.path.exists("logo.png"):
+    with open("logo.png", "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+        logo_html = f'<img class="logo-img" src="data:image/png;base64,{encoded}">'
+elif os.path.exists("logo.jpg"):
+    with open("logo.jpg", "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+        logo_html = f'<img class="logo-img" src="data:image/jpeg;base64,{encoded}">'
+else:
+    # اللوجو يظهر افتراضياً هنا من محرك البحث لتفادي الصفحة الفارغة
+    logo_html = '<div style="font-size: 50px; text-align: center;">🎬</div>'
 
-# إظهار صورة اللوجو في أعلى المنتصف
-st.markdown("""
-    <div class="logo-container">
-        <img class="logo-img" src="https://raw.githubusercontent.com/streamlit/streamlit/main/docs/static/logo.png" alt="CineSense Logo" style="display:none;">
-    </div>
-""", unsafe_allow_html=True)
-
-# البحث عن ملف اللوجو أو إظهاره بمرونة
-col_l, col_c, col_r = st.columns([1, 1, 1])
-with col_c:
-    # محاولة قراءة أي ملف صورة موجود في المجلد الرئيسي للـ GitHub
-    img_files = [f for f in os.listdir('.') if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
-    if img_files:
-        st.image(img_files[0], width=200)
-    else:
-        st.write("")
+# عرض اللوجو مباشرة في أعلى الصفحة
+st.markdown(f'<div class="logo-container">{logo_html}</div>', unsafe_allow_html=True)
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
 
 # Sidebar Specs & Logo
-if 'img_files' in locals() and img_files:
-    st.sidebar.image(img_files[0], use_container_width=True)
+st.sidebar.markdown(f'<div style="text-align: center; margin-bottom: 20px;">{logo_html}</div>', unsafe_allow_html=True)
 
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
