@@ -49,7 +49,7 @@ def load_sentiment_pipeline():
 
 classifier = load_sentiment_pipeline()
 
-# Helper Inference Function (Updated with 0.80 Threshold)
+# Helper Inference Function (Threshold set to 0.80)
 def predict_text(text):
     results = classifier(text)
     if isinstance(results, list) and len(results) > 0:
@@ -59,7 +59,7 @@ def predict_text(text):
         pos = scores.get('POSITIVE', scores.get('LABEL_1', 0.0))
         neg = scores.get('NEGATIVE', scores.get('LABEL_0', 0.0))
         
-        # Threshold Logic for Mixed / Balanced Sentiments (Set to 0.80)
+        # Threshold Logic for Mixed / Balanced Sentiments
         threshold = 0.80 
         if abs(pos - neg) < threshold:
             label = "MIXED"
@@ -75,7 +75,6 @@ def predict_text(text):
 # ==========================================
 # 3. Aspect-Based Sentiment Analysis Engine
 # ==========================================
-# Removed 'scenes' from visuals to avoid overlap with acting
 ASPECT_KEYWORDS = {
     "acting": ["acting", "actor", "actress", "cast", "performance", "performances"],
     "plot": ["plot", "story", "script", "ending", "storyline", "writing"],
@@ -85,7 +84,8 @@ ASPECT_KEYWORDS = {
 }
 
 def analyze_aspects(text):
-    sentences = re.split(r'[\.\!\?\,]|\bbut\b|\band\b', text, flags=re.IGNORECASE)
+    # Splits strictly at sentence delimiters (not at 'but' or 'and')
+    sentences = re.split(r'[\.\!\?\n]', text)
     aspect_results = {}
 
     for aspect, keywords in ASPECT_KEYWORDS.items():
@@ -139,7 +139,7 @@ with tab_single:
         [
             "Custom Input",
             "Sample 1: The acting was superb but the story was dull and the ending was disappointing.",
-            "Sample 2: The acting was brilliant in some scenes, but the acting was terrible in others.",
+            "Sample 2: The acting was brilliant in some scenes but terrible in others, and the plot was engaging at first but became confusing at the end.",
             "Sample 3: An absolute masterpiece with flawless direction and brilliant acting from start to finish."
         ]
     )
@@ -147,11 +147,11 @@ with tab_single:
     if "Sample 1" in preset:
         default_val = "The acting was superb but the story was dull and the ending was disappointing."
     elif "Sample 2" in preset:
-        default_val = "The acting was brilliant in some scenes, but the acting was terrible in others."
+        default_val = "The acting was brilliant in some scenes but terrible in others, and the plot was engaging at first but became confusing at the end."
     elif "Sample 3" in preset:
         default_val = "An absolute masterpiece with flawless direction and brilliant acting from start to finish."
     else:
-        default_val = "The acting was brilliant in some scenes, but the acting was terrible in others."
+        default_val = "The acting was brilliant in some scenes but terrible in others, and the plot was engaging at first but became confusing at the end."
 
     user_text = st.text_area("Enter a movie review:", value=default_val, height=90)
 
