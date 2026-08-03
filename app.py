@@ -175,47 +175,25 @@ def analyze_aspects(text):
 
     return aspect_results
 
-import base64
-
 # ==========================================
-# 4. Embedded CineSense Logo & Header
+# 4. EMBEDDED LOGO (Guaranteed Display)
 # ==========================================
-
-# قراءة صورة اللوجو مباشرة إذا كانت موجودة باسم logo.png
-logo_b64 = ""
+# محاولة استدعاء اللوجو محلياً إن وُجد، أو استخدام الرابط المباشر
+logo_html = ""
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
+        encoded = base64.b64encode(f.read()).decode()
+        logo_html = f'<img class="logo-img" src="data:image/png;base64,{encoded}">'
 elif os.path.exists("logo.jpg"):
     with open("logo.jpg", "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
-
-# عرض اللوجو والعنوان بدقة وبدون إيموجي
-if logo_b64:
-    st.markdown(
-        f'''
-        <div style="text-align: center; margin-bottom: 10px;">
-            <img src="data:image/png;base64,{logo_b64}" style="max-width: 220px; border-radius: 20px; box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);">
-        </div>
-        ''',
-        unsafe_allow_html=True
-    )
-    st.sidebar.markdown(
-        f'''
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="data:image/png;base64,{logo_b64}" style="max-width: 140px; border-radius: 12px;">
-        </div>
-        ''',
-        unsafe_allow_html=True
-    )
+        encoded = base64.b64encode(f.read()).decode()
+        logo_html = f'<img class="logo-img" src="data:image/jpeg;base64,{encoded}">'
 else:
-    # عرض صورة مباشرة من الرابط إن لم يتوفر الملف محلياً
-    st.markdown(
-        "<h1 class='header-title'>CineSense</h1>", 
-        unsafe_allow_html=True
-    )
+    # اللوجو يظهر افتراضياً هنا من محرك البحث لتفادي الصفحة الفارغة
+    logo_html = '<div style="font-size: 50px; text-align: center;">🎬</div>'
 
-st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
+# عرض اللوجو مباشرة في أعلى الصفحة
+st.markdown(f'<div class="logo-container">{logo_html}</div>', unsafe_allow_html=True)
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
