@@ -1,6 +1,6 @@
 import time
 import re
-import os
+import base64
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -24,7 +24,6 @@ st.markdown("""
         background: linear-gradient(135deg, #0A0819 0%, #03010A 100%);
         color: #E2E8F0;
     }
-    
     .header-title {
         text-align: center;
         font-size: 42px;
@@ -42,7 +41,6 @@ st.markdown("""
         letter-spacing: 1.5px;
         font-weight: 600;
     }
-    
     .metric-card {
         background: rgba(15, 23, 42, 0.75);
         border-radius: 16px;
@@ -109,7 +107,7 @@ def predict_text(text):
     return "UNKNOWN", 0.0, 0.0
 
 # ==========================================
-# 3. Aspect-Based Sentiment Analysis Engine (ABSA)
+# 3. ABSA Engine
 # ==========================================
 ASPECT_KEYWORDS = {
     "acting": ["acting", "actor", "actress", "cast", "performance", "performances"],
@@ -162,26 +160,24 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Header & Logo Integration (Forced Display)
+# 4. Direct Logo Rendering & Layout
 # ==========================================
 
-# البحث عن أي صورة للوجو في المجلد بصرف النظر عن اسمها
-possible_logos = [f for f in os.listdir('.') if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+# إدراج رابط صورة اللوجو مباشرة لضمان الظهور بدون أي مشاكل في السيرفر
+LOGO_URL = "https://i.ibb.co/6P01xvw/cinesense-logo.png"
+
+# تجربة قراءة صورة محلية إذا كانت مسبقة التسمية بـ logo.png، وإن لم توجد يُستخدم الرابط المباشر
+logo_to_show = "logo.png" if st.file_uploader is not None and os.path.exists("logo.png") else LOGO_URL
 
 col_l, col_c, col_r = st.columns([1, 1.2, 1])
 with col_c:
-    if possible_logos:
-        st.image(possible_logos[0], use_container_width=True)
-    else:
-        # إذا لم تجدي الصورة في المجلد، سيظهر خيار رفع الصورة مباشرة من الشريط الجانبي
-        uploaded_logo = st.sidebar.file_uploader("Upload Logo Image:", type=["png", "jpg", "jpeg"])
-        if uploaded_logo:
-            st.image(uploaded_logo, use_container_width=True)
+    st.image(logo_to_show, use_container_width=True)
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
 
-# Sidebar Specs
+# Sidebar Specs & Logo
+st.sidebar.image(logo_to_show, use_container_width=True)
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Architecture:** Fine-Tuned BERT + ABSA")
