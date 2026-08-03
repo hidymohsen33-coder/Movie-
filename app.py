@@ -1,6 +1,6 @@
 import time
 import re
-import base64
+import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -160,24 +160,37 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Direct Logo Rendering & Layout
+# 4. Logo Handling & Layout
 # ==========================================
 
-# إدراج رابط صورة اللوجو مباشرة لضمان الظهور بدون أي مشاكل في السيرفر
-LOGO_URL = "https://i.ibb.co/6P01xvw/cinesense-logo.png"
+# فحص إن كانت صورة اللوجو موجودة في المستودع
+logo_path = None
+for file in ["logo.png", "logo.jpg", "logo.jpeg"]:
+    if os.path.exists(file):
+        logo_path = file
+        break
 
-# تجربة قراءة صورة محلية إذا كانت مسبقة التسمية بـ logo.png، وإن لم توجد يُستخدم الرابط المباشر
-logo_to_show = "logo.png" if st.file_uploader is not None and os.path.exists("logo.png") else LOGO_URL
+# إظهار زر رفع صورة أختياري في القائمة الجانبية
+uploaded_logo = st.sidebar.file_uploader("Upload Custom Logo:", type=["png", "jpg", "jpeg"])
 
-col_l, col_c, col_r = st.columns([1, 1.2, 1])
-with col_c:
-    st.image(logo_to_show, use_container_width=True)
+if uploaded_logo is not None:
+    logo_to_display = uploaded_logo
+elif logo_path is not None:
+    logo_to_display = logo_path
+else:
+    logo_to_display = None
+
+# عرض اللوجو في أعلى المنتصف
+if logo_to_display:
+    col_l, col_c, col_r = st.columns([1, 1.2, 1])
+    with col_c:
+        st.image(logo_to_display, use_container_width=True)
+    st.sidebar.image(logo_to_display, use_container_width=True)
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
 
-# Sidebar Specs & Logo
-st.sidebar.image(logo_to_show, use_container_width=True)
+# Sidebar Specs
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Architecture:** Fine-Tuned BERT + ABSA")
