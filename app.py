@@ -49,7 +49,7 @@ def load_sentiment_pipeline():
 
 classifier = load_sentiment_pipeline()
 
-# Helper Inference Function (Updated with 50/50 Thresholding)
+# Helper Inference Function (Updated with 0.80 Threshold)
 def predict_text(text):
     results = classifier(text)
     if isinstance(results, list) and len(results) > 0:
@@ -59,8 +59,8 @@ def predict_text(text):
         pos = scores.get('POSITIVE', scores.get('LABEL_1', 0.0))
         neg = scores.get('NEGATIVE', scores.get('LABEL_0', 0.0))
         
-        # Threshold Logic for Mixed / Balanced Sentiments
-        threshold = 0.25 
+        # Threshold Logic for Mixed / Balanced Sentiments (Set to 0.80)
+        threshold = 0.80 
         if abs(pos - neg) < threshold:
             label = "MIXED"
             pos = 0.50
@@ -75,11 +75,12 @@ def predict_text(text):
 # ==========================================
 # 3. Aspect-Based Sentiment Analysis Engine
 # ==========================================
+# Removed 'scenes' from visuals to avoid overlap with acting
 ASPECT_KEYWORDS = {
     "acting": ["acting", "actor", "actress", "cast", "performance", "performances"],
     "plot": ["plot", "story", "script", "ending", "storyline", "writing"],
     "directing": ["directing", "director", "direction", "filmmaking"],
-    "visuals": ["visuals", "cinematography", "effects", "vfx", "scenes", "camera"],
+    "visuals": ["visuals", "cinematography", "effects", "vfx", "camera"],
     "music": ["music", "soundtrack", "score", "songs", "sound"]
 }
 
@@ -150,7 +151,7 @@ with tab_single:
     elif "Sample 3" in preset:
         default_val = "An absolute masterpiece with flawless direction and brilliant acting from start to finish."
     else:
-        default_val = "The acting was superb but the plot was predictable and boring."
+        default_val = "The acting was brilliant in some scenes, but the acting was terrible in others."
 
     user_text = st.text_area("Enter a movie review:", value=default_val, height=90)
 
