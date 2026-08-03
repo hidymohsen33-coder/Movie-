@@ -17,16 +17,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Dark Purple Cyberpunk UI Styling (Matching Presentation Theme)
+# Dark Purple Cyberpunk UI Styling
 st.markdown("""
     <style>
-    /* Dark Theme Background */
     .stApp {
         background: linear-gradient(135deg, #0A0819 0%, #03010A 100%);
         color: #E2E8F0;
     }
     
-    /* Header Styling */
     .header-title {
         text-align: center;
         font-size: 42px;
@@ -38,20 +36,19 @@ st.markdown("""
     }
     .header-sub {
         text-align: center;
-        font-size: 16px;
+        font-size: 14px;
         color: #94A3B8;
-        margin-bottom: 30px;
-        letter-spacing: 1px;
+        margin-bottom: 25px;
+        letter-spacing: 1.5px;
+        font-weight: 600;
     }
     
-    /* Neon Glow Metric Cards */
     .metric-card {
         background: rgba(15, 23, 42, 0.75);
         border-radius: 16px;
         padding: 20px;
         text-align: center;
         backdrop-filter: blur(10px);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .pos-card {
         border: 1px solid rgba(16, 185, 129, 0.4);
@@ -66,17 +63,15 @@ st.markdown("""
         font-weight: 700;
         color: #94A3B8;
         text-transform: uppercase;
-        letter-spacing: 1.2px;
     }
     .card-val {
         font-size: 32px;
         font-weight: 900;
         margin-top: 8px;
     }
-    .pos-text { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
-    .neg-text { color: #EF4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+    .pos-text { color: #10B981; }
+    .neg-text { color: #EF4444; }
 
-    /* Custom Buttons */
     .stButton>button {
         background: linear-gradient(90deg, #8B5CF6 0%, #D946EF 100%);
         color: white;
@@ -85,25 +80,6 @@ st.markdown("""
         border-radius: 10px;
         padding: 10px 24px;
         box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        box-shadow: 0 0 25px rgba(217, 70, 239, 0.7);
-        transform: translateY(-2px);
-    }
-    
-    /* Inputs Styling */
-    .stTextArea textarea {
-        background-color: #0F172A !important;
-        color: #F8FAFC !important;
-        border: 1px solid #334155 !important;
-        border-radius: 12px !important;
-    }
-    .stSelectbox div[data-baseweb="select"] {
-        background-color: #0F172A !important;
-        border: 1px solid #334155 !important;
-        color: #F8FAFC !important;
-        border-radius: 10px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -118,7 +94,6 @@ def load_sentiment_pipeline():
 
 classifier = load_sentiment_pipeline()
 
-# Helper Inference Function
 def predict_text(text):
     results = classifier(text)
     if isinstance(results, list) and len(results) > 0:
@@ -187,31 +162,32 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Main Interface & Logo Setup
+# 4. Header & Logo Integration (Forced Display)
 # ==========================================
 
-# إظهار اللوجو في أعلى منتصف الواجهة إذا كان الملف موجوداً في مجلد المشروع باسم logo.png
-LOGO_PATH = "logo.png"
+# البحث عن أي صورة للوجو في المجلد بصرف النظر عن اسمها
+possible_logos = [f for f in os.listdir('.') if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-col_logo_left, col_logo_center, col_logo_right = st.columns([1, 1, 1])
-with col_logo_center:
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=220)
+col_l, col_c, col_r = st.columns([1, 1.2, 1])
+with col_c:
+    if possible_logos:
+        st.image(possible_logos[0], use_container_width=True)
+    else:
+        # إذا لم تجدي الصورة في المجلد، سيظهر خيار رفع الصورة مباشرة من الشريط الجانبي
+        uploaded_logo = st.sidebar.file_uploader("Upload Logo Image:", type=["png", "jpg", "jpeg"])
+        if uploaded_logo:
+            st.image(uploaded_logo, use_container_width=True)
 
 st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
 st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
 
-# Sidebar Design
-if os.path.exists(LOGO_PATH):
-    st.sidebar.image(LOGO_PATH, use_container_width=True)
-
+# Sidebar Specs
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Architecture:** Fine-Tuned BERT + ABSA")
 st.sidebar.markdown("**Dataset:** Stanford IMDB (50K Reviews)")
 st.sidebar.markdown("**Accuracy:** 93.2%")
-st.sidebar.markdown("**Theme:** Neon Cyberpunk (Purple/Blue)")
-st.sidebar.markdown("**Status:** 🟢 Live 24/7 API")
+st.sidebar.markdown("**Status:** 🟢 Live API")
 
 tab_single, tab_batch = st.tabs(["📄 Single Review & Aspect Breakdown", "📊 Batch Analytics"])
 
@@ -338,7 +314,7 @@ with tab_single:
                 with col_a2:
                     st.dataframe(df_aspects, use_container_width=True, height=250)
             else:
-                st.info("No specific movie aspects (acting, plot, directing, visuals, music) detected in this review.")
+                st.info("No specific movie aspects detected in this review.")
 
 # ------------------------------------------
 # TAB 2: Batch Analytics
@@ -354,10 +330,7 @@ with tab_batch:
         default_batch = (
             "An absolute masterpiece with brilliant acting.\n"
             "Terrible film, a complete waste of time.\n"
-            "The visuals were stunning and the story was gripping.\n"
-            "Boring and predictable from start to finish.\n"
-            "A heartwarming movie with great performances.\n"
-            "Awful script and poor directing."
+            "The visuals were stunning and the story was gripping."
         )
         batch_text = st.text_area("Enter multiple reviews (one per line):", value=default_batch, height=140)
         if batch_text.strip():
@@ -395,7 +368,6 @@ with tab_batch:
 
             st.markdown("---")
             
-            # High-level Metrics
             m_col1, m_col2, m_col3 = st.columns(3)
             with m_col1:
                 st.metric("Total Reviews Analyzed", total)
@@ -404,7 +376,6 @@ with tab_batch:
             with m_col3:
                 st.metric("Negative Ratio", f"{(neg_count/total)*100:.1f}%", f"{neg_count} Reviews")
 
-            # Charts & Table Breakdown
             c_chart, c_table = st.columns([1, 1.5])
 
             with c_chart:
