@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Model artifacts (too large for git — host on Hugging Face Hub instead)
+saved_model/
+final_model/
+model/
+*.zip
+*.safetensors
+*.bin
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
