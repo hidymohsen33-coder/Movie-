@@ -57,9 +57,8 @@ st.markdown("""
 # ==========================================
 @st.cache_resource
 def load_sentiment_pipeline():
-    # نموذج جاهز ومضمون على Hugging Face لمنع خطأ OSError
     model_name = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
-    return pipeline("text-classification", model=model_name, return_all_scores=True)
+    return pipeline("text-classification", model=model_name, top_k=None)
 
 classifier = load_sentiment_pipeline()
 
@@ -125,13 +124,21 @@ if st.button("🚀 Analyze Sentiment", type="primary"):
         start_time = time.time()
         
         # Inference
-        results = classifier(user_review)[0]
+        results = classifier(user_review)
         latency = (time.time() - start_time) * 1000
 
-        # Extract scores
-        scores = {res['label']: res['score'] for res in results}
+        # المعالجة الآمنة للنتائج بجميع أشكال المخرجات المختلفة
+        if isinstance(results, list) and len(results) > 0:
+            if isinstance(results[0], list):
+                raw_scores = results[0]
+            else:
+                raw_scores = results
+        else:
+            raw_scores = []
+
+        scores = {res['label']: res['score'] for res in raw_scores}
         
-        # Map labels (Handles POSITIVE/NEGATIVE & LABEL_1/LABEL_0)
+        # Map labels (Supports POSITIVE/NEGATIVE & LABEL_1/LABEL_0)
         pos_score = scores.get('POSITIVE', scores.get('LABEL_1', 0.0))
         neg_score = scores.get('NEGATIVE', scores.get('LABEL_0', 0.0))
         
