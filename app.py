@@ -1,5 +1,6 @@
 import time
 import re
+import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -16,26 +17,94 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Enterprise Grade UI)
+# Dark Purple Cyberpunk UI Styling (Matching Presentation Theme)
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .header-title { text-align: center; font-size: 36px; font-weight: 800; color: #4F46E5; margin-bottom: 0px; }
-    .header-sub { text-align: center; font-size: 16px; color: #6B7280; margin-bottom: 25px; }
-    .metric-card {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    /* Dark Theme Background */
+    .stApp {
+        background: linear-gradient(135deg, #0A0819 0%, #03010A 100%);
+        color: #E2E8F0;
     }
-    .pos-card { border-top: 5px solid #10B981; }
-    .neg-card { border-top: 5px solid #EF4444; }
-    .card-label { font-size: 13px; font-weight: 600; color: #6B7280; text-transform: uppercase; }
-    .card-val { font-size: 28px; font-weight: 800; margin: 5px 0; }
-    .pos-text { color: #10B981; }
-    .neg-text { color: #EF4444; }
+    
+    /* Header Styling */
+    .header-title {
+        text-align: center;
+        font-size: 42px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #A855F7 0%, #EC4899 50%, #3B82F6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
+    }
+    .header-sub {
+        text-align: center;
+        font-size: 16px;
+        color: #94A3B8;
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+    }
+    
+    /* Neon Glow Metric Cards */
+    .metric-card {
+        background: rgba(15, 23, 42, 0.75);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pos-card {
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+    }
+    .neg-card {
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+    }
+    .card-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+    }
+    .card-val {
+        font-size: 32px;
+        font-weight: 900;
+        margin-top: 8px;
+    }
+    .pos-text { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+    .neg-text { color: #EF4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+
+    /* Custom Buttons */
+    .stButton>button {
+        background: linear-gradient(90deg, #8B5CF6 0%, #D946EF 100%);
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 24px;
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        box-shadow: 0 0 25px rgba(217, 70, 239, 0.7);
+        transform: translateY(-2px);
+    }
+    
+    /* Inputs Styling */
+    .stTextArea textarea {
+        background-color: #0F172A !important;
+        color: #F8FAFC !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+    }
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #0F172A !important;
+        border: 1px solid #334155 !important;
+        color: #F8FAFC !important;
+        border-radius: 10px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -65,7 +134,7 @@ def predict_text(text):
     return "UNKNOWN", 0.0, 0.0
 
 # ==========================================
-# 3. Aspect-Based Sentiment Analysis Engine (Definitive Deterministic ABSA)
+# 3. Aspect-Based Sentiment Analysis Engine (ABSA)
 # ==========================================
 ASPECT_KEYWORDS = {
     "acting": ["acting", "actor", "actress", "cast", "performance", "performances"],
@@ -78,7 +147,6 @@ ASPECT_KEYWORDS = {
 CONTRAST_WORDS = ["but", "however", "although", "yet", "on the other hand", "despite"]
 
 def analyze_aspects(text):
-    # تقسيم النص بناءً على النقاط وعلامات الترقيم الرئيسية
     sentences = re.split(r'[\.\!\?\n]', text)
     aspect_results = {}
 
@@ -90,17 +158,13 @@ def analyze_aspects(text):
 
         if relevant_parts:
             combined_aspect_text = " ".join(relevant_parts)
-            
-            # فحص حتمي: هل يحتوي نص العنصر على كلمة تناقض؟
             has_contrast = any(re.search(r'\b' + cw + r'\b', combined_aspect_text, re.IGNORECASE) for cw in CONTRAST_WORDS)
             
             if has_contrast:
-                # إذا وجد تناقض مباشر في نفس سياق العنصر، يتم التعيين قسراً لـ 50/50 MIXED
                 final_label = "MIXED"
                 final_pos = 50.0
                 final_neg = 50.0
             else:
-                # غير ذلك يتم الاعتماد على التقييم الطبيعي من النموذج
                 lbl, pos_s, neg_s = predict_text(combined_aspect_text)
                 final_label = lbl
                 final_pos = round(pos_s * 100, 1)
@@ -123,16 +187,30 @@ def analyze_aspects(text):
     return aspect_results
 
 # ==========================================
-# 4. Main Interface & Navigation
+# 4. Main Interface & Logo Setup
 # ==========================================
-st.markdown("<h1 class='header-title'>🎬 CineSense</h1>", unsafe_allow_html=True)
-st.markdown("<p class='header-sub'>AI-powered movie review sentiment analysis engine</p>", unsafe_allow_html=True)
+
+# إظهار اللوجو في أعلى منتصف الواجهة إذا كان الملف موجوداً في مجلد المشروع باسم logo.png
+LOGO_PATH = "logo.png"
+
+col_logo_left, col_logo_center, col_logo_right = st.columns([1, 1, 1])
+with col_logo_center:
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=220)
+
+st.markdown("<h1 class='header-title'>CineSense</h1>", unsafe_allow_html=True)
+st.markdown("<p class='header-sub'>MOVIE REVIEW SENTIMENT ANALYSIS WITH BERT</p>", unsafe_allow_html=True)
+
+# Sidebar Design
+if os.path.exists(LOGO_PATH):
+    st.sidebar.image(LOGO_PATH, use_container_width=True)
 
 st.sidebar.title("⚙️ Engine Specs")
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Architecture:** Fine-Tuned BERT + ABSA")
 st.sidebar.markdown("**Dataset:** Stanford IMDB (50K Reviews)")
 st.sidebar.markdown("**Accuracy:** 93.2%")
+st.sidebar.markdown("**Theme:** Neon Cyberpunk (Purple/Blue)")
 st.sidebar.markdown("**Status:** 🟢 Live 24/7 API")
 
 tab_single, tab_batch = st.tabs(["📄 Single Review & Aspect Breakdown", "📊 Batch Analytics"])
@@ -199,7 +277,14 @@ with tab_single:
                     marker_colors=['#10B981', '#EF4444'],
                     textinfo='percent+label'
                 )])
-                fig_overall.update_layout(showlegend=False, height=180, margin=dict(l=10, r=10, t=10, b=10))
+                fig_overall.update_layout(
+                    showlegend=False, 
+                    height=180, 
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#E2E8F0')
+                )
                 st.plotly_chart(fig_overall, use_container_width=True)
 
             # Aspect-Based Breakdown Section
@@ -240,8 +325,11 @@ with tab_single:
                     barmode='group',
                     height=320,
                     margin=dict(l=20, r=20, t=20, b=20),
-                    yaxis=dict(title="Percentage (%)", range=[0, 100]),
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    yaxis=dict(title="Percentage (%)", range=[0, 100], color='#94A3B8'),
+                    xaxis=dict(color='#94A3B8'),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color='#E2E8F0')),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)'
                 )
 
                 col_a1, col_a2 = st.columns([1.5, 1])
@@ -329,7 +417,13 @@ with tab_batch:
                     hole=0.5
                 )
                 fig_pie.update_traces(textinfo='percent+label')
-                fig_pie.update_layout(showlegend=False, height=280)
+                fig_pie.update_layout(
+                    showlegend=False, 
+                    height=280,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#E2E8F0')
+                )
                 st.plotly_chart(fig_pie, use_container_width=True)
 
             with c_table:
